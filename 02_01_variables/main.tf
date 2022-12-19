@@ -1,9 +1,13 @@
 # //////////////////////////////
 # VARIABLES
 # //////////////////////////////
-variable "aws_access_key" {}
+variable "aws_access_key" {} #no default variable, and will be of default type (str)
 
 variable "aws_secret_key" {}
+
+variable "deploy_environment" {
+  default = "DEV"
+}
 
 variable "region" {
   default = "us-east-2"
@@ -43,7 +47,7 @@ variable "environment_instance_type" {
 }
 
 variable "environment_instance_settings" {
-  type = map(object({instance_type=string, monitoring=bool}))
+  type = map(object({instance_type=string, monitoring=bool})) #schema defining type
   default = {
     "DEV" = {
       instance_type = "t2.micro", 
@@ -129,7 +133,7 @@ resource "aws_security_group" "sg-nodejs-instance" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+ 
   egress {
     from_port = 0
     to_port = 0
@@ -141,15 +145,15 @@ resource "aws_security_group" "sg-nodejs-instance" {
 # INSTANCE
 resource "aws_instance" "nodejs1" {
   ami = data.aws_ami.aws-linux.id
-  instance_type = var.environment_instance_type["DEV"]
-  //instance_type = var.environment_instance_settings["PROD"].instance_type
+  //instance_type = var.environment_instance_type["DEV"]
+  instance_type = var.environment_instance_settings[var.deploy_environment].instance_type
   subnet_id = aws_subnet.subnet1.id
   vpc_security_group_ids = [aws_security_group.sg-nodejs-instance.id]
 
-  monitoring = var.environment_instance_settings["PROD"].monitoring
+  monitoring = var.environment_instance_settings[var.deploy_environment].monitoring
 
-  tags = {Environment = var.environment_list[0]}
-
+  #tags = {Environment = var.environment_list[0]}
+  tags = {Environment = var.environment_map[var.deploy_environment]}
 }
 
 # //////////////////////////////
